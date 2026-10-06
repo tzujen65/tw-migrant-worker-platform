@@ -3,8 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Job } from '@/lib/supabase';
+import { AuthGuard } from '@/components/auth-guard';
+import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
 
 export default function AdminJobsPage() {
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -72,12 +76,15 @@ export default function AdminJobsPage() {
   }
 
   return (
-    <main className="container" style={{ padding: '40px 20px', minHeight: '100vh' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <Link href="/admin" style={{ color: '#0f5bd3', fontWeight: 'bold' }}>
-          ← 回到管理後台
-        </Link>
-      </div>
+    <AuthGuard allowedRoles={['admin']}>
+      <SiteHeader />
+      <main className="container" style={{ padding: '40px 20px', minHeight: 'calc(100vh - 160px)' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <Link href="/admin" style={{ color: '#0f5bd3', fontWeight: 'bold' }}>
+            ← 回到管理後台
+          </Link>
+        </div>
+
 
       <h1>職缺管理</h1>
 
@@ -292,5 +299,8 @@ export default function AdminJobsPage() {
         </div>
       </div>
     </main>
-  );
+    <SiteFooter />
+  </AuthGuard>
+);
 }
+

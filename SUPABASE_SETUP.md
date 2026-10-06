@@ -126,6 +126,47 @@ VALUES
 2. 部署應用程式
 3. 應用程式將自動連接到雲端資料庫
 
+## 步驟 6: 會員認證、Email 驗證開通與三層身分權限設定 (RBAC)
+
+本專案支援完整的會員系統與三級權限分級：
+1. **最高管理者 (`admin`)**：後台管理員，擁有最高數據審核權限與使用者身分管理權（後台路徑：`/admin` 與 `/admin/users`）。
+2. **申請公司管理者 (`company_admin`)**：企業雇主或仲介公司管理員，可管理自家公司檔案與發布招募職缺（專區路徑：`/company/dashboard`）。
+3. **一般使用者 (`user`)**：求職移工與一般會員，可維護個人求職資料、查看應徵進度與收藏職缺（會員中心：`/dashboard`）。
+
+### 1. 執行權限資料表與 Trigger 建立
+
+進入 Supabase 專案後台的 **SQL Editor**，執行本專案根目錄下的 [`supabase-auth-setup.sql`](file:///Users/torres/tw-migrant-worker-platform/supabase-auth-setup.sql) 腳本。
+
+該腳本會建立：
+- `user_role` 列舉型別 (`admin`, `company_admin`, `user`)
+- `profiles` 資料表（記錄身分、公司名稱、統編、Email 開通狀態等）
+- `handle_new_user` 觸發器：當使用者透過 Supabase Auth 註冊或完成驗證時，自動在 `profiles` 同步建立或更新資料
+- 嚴格的 Row Level Security (RLS) 權限規則
+
+### 2. 開啟 Email 驗證開通設定 (Email Confirmation)
+
+為確保使用者註冊後必須先進行 Email 驗證方可開通帳號：
+1. 前往 Supabase 後台 -> **Authentication** -> **Providers** -> 點擊 **Email**。
+2. 勾選 **"Confirm email"**（開啟電子郵件驗證開通）。
+3. 前往 **Authentication** -> **URL Configuration**：
+   - 將 **Site URL** 設為您的正式網址（本機開發為 `http://localhost:3000`）。
+   - 在 **Redirect URLs** 中新增：
+     - `http://localhost:3000/auth/callback`
+     - `http://localhost:3000/auth/login`
+     - `https://your-domain.vercel.app/auth/callback`
+
+### 3. 指派第一位系統最高管理者 (Admin)
+
+新建立的帳號預設為一般使用者或申請公司管理者。若要指派最高管理權限，至 Supabase SQL Editor 執行：
+
+```sql
+UPDATE profiles
+SET role = 'admin'
+WHERE email = 'your-admin-email@example.com';
+```
+
+升級完成後，該帳號登入系統即可造訪 `/admin` 與 `/admin/users` 進行後台全局管理！
+
 ## 常見問題
 
 ### Q: 新增職缺時收到 403 錯誤
@@ -134,5 +175,6 @@ A: 確保你的 RLS 策略正確設定了寫入權限
 ### Q: 無法從應用程式讀取資料
 A: 檢查 `.env.local` 中的 Supabase URL 和金鑰是否正確
 
-### Q: 如何限制只有管理員能新增資料
-A: 修改 RLS 策略使用 `auth.role()` 進行身份驗證（需要實現認證系統）
+### Q: 本地端未設定 SMTP 時如何測試 Email 驗證開通？
+A: 系統已在 `/auth/verify-email` 提供「一鍵模擬完成 Email 驗證並開通帳號」按鈕，同時在登入頁提供三大角色（最高管理者、公司管理者、一般求職者）一鍵切換體驗，方便本機與 Demo 展示！
+

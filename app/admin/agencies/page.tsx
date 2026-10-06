@@ -3,8 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Agency } from '@/lib/supabase';
+import { AuthGuard } from '@/components/auth-guard';
+import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
 
 export default function AdminAgenciesPage() {
+
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -62,12 +66,15 @@ export default function AdminAgenciesPage() {
   }
 
   return (
-    <main className="container" style={{ padding: '40px 20px', minHeight: '100vh' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <Link href="/admin" style={{ color: '#0f5bd3', fontWeight: 'bold' }}>
-          ← 回到管理後台
-        </Link>
-      </div>
+    <AuthGuard allowedRoles={['admin']}>
+      <SiteHeader />
+      <main className="container" style={{ padding: '40px 20px', minHeight: 'calc(100vh - 160px)' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <Link href="/admin" style={{ color: '#0f5bd3', fontWeight: 'bold' }}>
+            ← 回到管理後台
+          </Link>
+        </div>
+
 
       <h1>仲介公司管理</h1>
 
@@ -191,5 +198,8 @@ export default function AdminAgenciesPage() {
         </div>
       </div>
     </main>
-  );
+    <SiteFooter />
+  </AuthGuard>
+);
 }
+
